@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe 20x20</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(20, 30px);
+            grid-template-rows: repeat(20, 30px);
+            gap: 1px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: rgb(180, 180, 180);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .cell.x {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .cell.o {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="board" id="board"></div>
+    <button id="undoButton">Undo</button>
+    <script>
+        const X_CLASS = 'x';
+        const O_CLASS = 'o';
+        const board = document.getElementById('board');
+        const undoButton = document.getElementById('undoButton');
+        let oTurn;
+        let moveHistory = [];
+
+        function createBoard() {
+            for (let i = 0; i < 400; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.cell = '';
+                board.appendChild(cell);
+                cell.addEventListener('click', handleClick, { once: true });
+            }
+        }
+
+        function startGame() {
+            oTurn = false;
+            moveHistory = [];
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove(X_CLASS);
+                cell.classList.remove(O_CLASS);
+                cell.textContent = '';
+                cell.addEventListener('click', handleClick, { once: true });
+            });
+        }
+
+        function handleClick(e) {
+            const cell = e.target;
+            const currentClass = oTurn ? O_CLASS : X_CLASS;
+            placeMark(cell, currentClass);
+            moveHistory.push(cell);
+            if (checkWin(currentClass)) {
+                setTimeout(() => {
+                    alert(`${currentClass.toUpperCase()} Wins!`);
+                    startGame();
+                }, 100);
+            } else if (isDraw()) {
+                setTimeout(() => {
+                    alert('Draw!');
+                    startGame();
+                }, 100);
+            } else {
+                swapTurns();
+            }
+        }
+
+        function placeMark(cell, currentClass) {
+            cell.classList.add(currentClass);
+            cell.textContent = currentClass.toUpperCase();
+        }
+
+        function swapTurns() {
+            oTurn = !oTurn;
+        }
+
+        function checkWin(currentClass) {
+            const cells = document.querySelectorAll('.cell');
+            const WINNING_COMBINATIONS = generateWinningCombinations(20, 5);
+            return WINNING_COMBINATIONS.some(combination => {
+                return combination.every(index => {
+                    return cells[index].classList.contains(currentClass);
+                });
+            });
+        }
+
+        function generateWinningCombinations(size, winLength) {
+            const combinations = [];
+
+            // Rows
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col <= size - winLength; col++) {
+                    const combination = [];
+                    for (let i = 0; i < winLength; i++) {
+                        combination.push(row * size + col + i);
+                    }
+                    combinations.push(combination);
+                }
+            }
+
+            // Columns
+            for (let col = 0; col < size; col++) {
+                for (let row = 0; row <= size - winLength; row++) {
+                    const combination = [];
+                    for (let i = 0; i < winLength; i++) {
+                        combination.push((row + i) * size + col);
+                    }
+                    combinations.push(combination);
+                }
+            }
+
+            // Diagonals (top-left to bottom-right)
+            for (let row = 0; row <= size - winLength; row++) {
+                for (let col = 0; col <= size - winLength; col++) {
+                    const combination = [];
+                    for (let i = 0; i < winLength; i++) {
+                        combination.push((row + i) * size + col + i);
+                    }
+                    combinations.push(combination);
+                }
+            }
+
+            // Diagonals (top-right to bottom-left)
+            for (let row = 0; row <= size - winLength; row++) {
+                for (let col = winLength - 1; col < size; col++) {
+                    const combination = [];
+                    for (let i = 0; i < winLength; i++) {
+                        combination.push((row + i) * size + col - i);
+                    }
+                    combinations.push(combination);
+                }
+            }
+
+            return combinations;
+        }
+
+        function isDraw() {
+            return [...document.querySelectorAll('.cell')].every(cell => {
+                return cell.classList.contains(X_CLASS) || cell.classList.contains(O_CLASS);
+            });
+        }
+
+        undoButton.addEventListener('click', undoMove);
+
+        function undoMove() {
+            if (moveHistory.length > 0) {
+                const lastMove = moveHistory.pop();
+                lastMove.classList.remove(X_CLASS);
+                lastMove.classList.remove(O_CLASS);
+                lastMove.textContent = '';
+                lastMove.addEventListener('click', handleClick, { once: true });
+                swapTurns();
+            }
+        }
+
+        createBoard();
+        startGame();
+    </script>
+</body>
+</html>
